@@ -79,8 +79,6 @@ void UnloadableSpriteNode::loadedTexture(CCObject* obj)
 	this->_sprite->setScaleX(this->_activeRect.size.width / this->_sprite->getContentSize().width);
 	this->_sprite->setScaleY(this->_activeRect.size.height / this->_sprite->getContentSize().height);
     loading = false;
-    
-    //CCLog("texure 222=%s", CCTextureCache::sharedTextureCache()->description());
 }
 
 void UnloadableSpriteNode::unload()
@@ -197,15 +195,6 @@ void CCBigImage::prepareTilesWithFileExtensionZ(string plistFile, string extensi
             string name = filename.substr(0, index);
 			spriteName = (name+"."+extension).c_str();
 		}
-		
-		// if file doesn't exist - do not use it
-        /*int len = 10;
-        string path = CCFileUtils::fullPathFromRelativePath(spriteName);
-        CCLog("path=%s", path.c_str());
-        if (!CCFileUtils::getFileData(path.c_str(), "r", (unsigned long *)(&len))) {
-            CCLOGINFO(@"CCBigImage#prepareTilesWithFile:extension:z: %@ doesn't exists - skipping tile.", filePath);
-			continue;
-        }*/
         
 		// Create & Add Tile (Dynamic Sprite Mode)
 		UnloadableSpriteNode* tile = UnloadableSpriteNode::nodeWithImageForRect(spriteName, tileRect);

@@ -210,7 +210,6 @@
 		C3B8C41A1624015200A9C67B /* bigImage_4_5.png in Resources */ = {isa = PBXBuildFile; fileRef = C3B8C3D31624015200A9C67B /* bigImage_4_5.png */; };
 		C3B8C41B1624015200A9C67B /* bigImage_4_6-hd.png in Resources */ = {isa = PBXBuildFile; fileRef = C3B8C3D41624015200A9C67B /* bigImage_4_6-hd.png */; };
 		C3B8C41C1624015200A9C67B /* bigImage_4_6.png in Resources */ = {isa = PBXBuildFile; fileRef = C3B8C3D51624015200A9C67B /* bigImage_4_6.png */; };
-		C3F64F6E1623C71100751421 /* TestNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3F64F6C1623C71100751421 /* TestNode.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -564,8 +563,6 @@
 		C3B8C3D31624015200A9C67B /* bigImage_4_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bigImage_4_5.png; sourceTree = "<group>"; };
 		C3B8C3D41624015200A9C67B /* bigImage_4_6-hd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bigImage_4_6-hd.png"; sourceTree = "<group>"; };
 		C3B8C3D51624015200A9C67B /* bigImage_4_6.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bigImage_4_6.png; sourceTree = "<group>"; };
-		C3F64F6C1623C71100751421 /* TestNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestNode.cpp; sourceTree = "<group>"; };
-		C3F64F6D1623C71100751421 /* TestNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestNode.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1173,8 +1170,6 @@
 				C3ADD05B161F76A000A14878 /* CCBigImageLayer.cpp */,
 				C3ADD0F3161F7CB400A14878 /* BigImageScene.h */,
 				C3ADD0F2161F7CB400A14878 /* BigImageScene.cpp */,
-				C3F64F6C1623C71100751421 /* TestNode.cpp */,
-				C3F64F6D1623C71100751421 /* TestNode.h */,
 			);
 			name = CCBigImage;
 			path = Classes/CCBigImage;
@@ -1514,7 +1509,6 @@
 				C3ADD05D161F76A000A14878 /* CCBigImage.cpp in Sources */,
 				C3ADD05E161F76A000A14878 /* CCBigImageLayer.cpp in Sources */,
 				C3ADD0F4161F7CB400A14878 /* BigImageScene.cpp in Sources */,
-				C3F64F6E1623C71100751421 /* TestNode.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
