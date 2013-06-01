@@ -9,8 +9,8 @@ using namespace CocosDenshion;
 
 CCScene* BigImage::scene()
 {
-	CCScene *scene = CCScene::node();
-	BigImage *layer = BigImage::node();
+	CCScene *scene = CCScene::create();
+	BigImage *layer = BigImage::create();
 	scene->addChild(layer);
 
 	return scene;
@@ -23,7 +23,7 @@ bool BigImage::init()
 		return false;
 	}
 
-	CCBigImageLayer* layer = CCBigImageLayer::node();
+	CCBigImageLayer* layer = CCBigImageLayer::create();
     this->addChild(layer, kLayerTag, kLayerTag);
     
 	return true;

@@ -30,14 +30,14 @@ mkdir tiles
 
 # Prepare SD Tiles
 echo Preparing SD Tiles
-./tileCutter --rigidTilesSize --tileWidth 256 --tileHeight 256 --inputFile bigImage.jpg --outputFile tiles/bigImage
+./tileCutter --rigidTilesSize --tileWidth 256 --tileHeight 256 --inputFile bigImage.png --outputFile tiles/bigImage
 
 # Prepare HD Tiles
 echo Preparing HD Tiles
-./tileCutter --rigidTilesSize --tileWidth 512 --tileHeight 512 --inputFile bigImage-hd.jpg --outputFile tiles/bigImage --outputSuffix -hd
+./tileCutter --rigidTilesSize --tileWidth 512 --tileHeight 512 --inputFile bigImage-hd.png --outputFile tiles/bigImage --outputSuffix -hd
 
 # Remove HD Tiles PLISTs
-rm tiles/bigImage-hd.plist
+#rm tiles/bigImage@2x.plist
 
 
 

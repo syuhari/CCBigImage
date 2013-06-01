@@ -9,7 +9,7 @@ public:
 	virtual bool init();  
 	static cocos2d::CCScene* scene();
     virtual void onEnterTransitionDidFinish();
-	LAYER_NODE_FUNC(BigImage);
+	CREATE_FUNC(BigImage);
 };
 
 #endif // __BigImage_SCENE_H__

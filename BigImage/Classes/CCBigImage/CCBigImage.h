@@ -10,6 +10,7 @@
 
 #include "cocos2d.h"
 using namespace cocos2d;
+using namespace std;
 
 // How many times visit should be called to call removeUnusedTexture
 #define CCBIGIMAGE_TEXTURE_UNLOAD_PERIOD 30
@@ -25,6 +26,7 @@ public:
 class CCBigImage : public CCNode
 {
 private:
+    bool drawing;
     CCTextureCache* _textureCache;
 	// Area within all tiles must be loaded
 	CCRect _loadedRect;
@@ -39,7 +41,6 @@ private:
 	bool _significantPositionChange; //< if YES - tiles load will be forced
     
     void startTilesLoadingThread();
-    void stopTilesLoadingThread();
     
     void prepareTilesWithFileExtensionZ(string plistFile, string extension, int tilesZ);
     void updateLoadRect();
@@ -47,11 +48,12 @@ private:
     
     static void *updateTilesInThread(void *ptr);
     bool _tilesLoadThreadCancel;
+    bool _allStop;
     
 	/** Private method, return the string found by key in dict.
      @return "" if not found; return the string if found.
      */
-	inline const char * valueForKey(const char *key, CCDictionary<std::string, CCObject*> *dict)
+	inline const char * valueForKey(const char *key, CCDictionary *dict)
 	{
 		if (dict)
 		{
@@ -89,6 +91,9 @@ public:
     virtual void onEnter();
     virtual void onExit();
     virtual void visit();
+    
+    void stopTilesLoadingThread();
+
 #if CC_BIGIMAGE_DEBUG_DRAW
     virtual void draw();
 #endif
@@ -102,6 +107,7 @@ public:
 class UnloadableSpriteNode : public CCNode
 {
 private:
+    bool drawing;
     bool loading;
 	// name of texture file for sprite
     string _imageName;

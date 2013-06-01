@@ -2,8 +2,8 @@
 //  main.m
 //  BigImage
 //
-//  Created by 松浦 晃洋 on 12/10/06.
-//  Copyright __MyCompanyName__ 2012年. All rights reserved.
+//  Created by 松浦 晃洋 on 6/1/13.
+//  Copyright __MyCompanyName__ 2013. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>

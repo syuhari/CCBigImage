@@ -6,8 +6,8 @@
 //
 
 #include "CCBigImage.h"
-#include "CCThread.h"
-#include "CCNS.h"
+#include "platform/CCThread.h"
+#include "cocoa/CCNS.h"
 
 UnloadableSpriteNode* UnloadableSpriteNode::nodeWithImageForRect(string anImage, CCRect aRect)
 {
@@ -23,6 +23,8 @@ UnloadableSpriteNode* UnloadableSpriteNode::nodeWithImageForRect(string anImage,
 
 bool UnloadableSpriteNode::initWithImageForRect(string anImage, CCRect aRect)
 {
+    drawing = false;
+    loading = false;
     _imageName = anImage;
     _activeRect = aRect;
     setAnchorPoint(ccp(0,0));
@@ -37,16 +39,19 @@ bool UnloadableSpriteNode::initWithImageForRect(string anImage, CCRect aRect)
 void UnloadableSpriteNode::visit()
 {
 	// quick return if not visible
-	if (!this->getIsVisible()) return;
+	if (!this->isVisible()) return;
 	
     if (!this->_sprite) return;
     
-    glPushMatrix();
+    drawing = true;
+    kmGLPushMatrix();
 	
     this->transform();
-	this->_sprite->visit();
-	
-    glPopMatrix();
+    if (this->_sprite!=NULL) {
+        this->_sprite->visit();
+	}
+    kmGLPopMatrix();
+    drawing = false;
 }
 
 CCRect UnloadableSpriteNode::boundingBox()
@@ -57,6 +62,10 @@ CCRect UnloadableSpriteNode::boundingBox()
 UnloadableSpriteNode::~UnloadableSpriteNode()
 {
 	if (this->_sprite) {
+        while (drawing) {
+            // 描画中のためウェイト
+            usleep(30*1000);
+        }
         this->_sprite->release();
         this->_sprite = NULL;
     }
@@ -67,23 +76,36 @@ UnloadableSpriteNode::~UnloadableSpriteNode()
 void UnloadableSpriteNode::loadedTexture(CCObject* obj)
 {
     CCTexture2D* aTex = (CCTexture2D*)obj;
+    if (aTex==NULL || aTex->retainCount()<=0) {
+        loading = false;
+        return;
+    }
 	aTex->setAntiAliasTexParameters();
 	
 	//create sprite, position it and at to self
+    drawing = true;
+    
     this->_sprite = new CCSprite;
     this->_sprite->initWithTexture(aTex);
+
 	this->_sprite->setAnchorPoint(ccp(0,0));
 	this->_sprite->setPosition(ccp(0,0));
-	
+    
 	// fill our activeRect fully with sprite (stretch if needed)
 	this->_sprite->setScaleX(this->_activeRect.size.width / this->_sprite->getContentSize().width);
 	this->_sprite->setScaleY(this->_activeRect.size.height / this->_sprite->getContentSize().height);
+    
     loading = false;
+    drawing = false;
 }
 
 void UnloadableSpriteNode::unload()
 {
     if (this->_sprite) {
+        while (drawing) {
+            // 描画中のためウェイト
+            usleep(30*1000);
+        }
         this->_sprite->release();
         this->_sprite = NULL;
     }
@@ -130,14 +152,15 @@ CCBigImage* CCBigImage::nodeWithTilesFileTilesExtensionTilesZ(string filename, s
 // designated initializer
 bool CCBigImage::initWithTilesFileTilesExtensionTilesZ(string filename, string extension, int tilesZ)
 {
-    // avoid flickering issue
     CCDirector::sharedDirector()->setDepthTest(false);
 
     _loadedRect = CCRectZero;
     _screenLoadRectExtension = CCSizeZero;
     _textureCache = CCTextureCache::sharedTextureCache();
+    _allStop = false;
+    drawing = false;
     
-    string path = CCFileUtils::fullPathFromRelativePath(filename.c_str());
+    string path = CCFileUtils::sharedFileUtils()->fullPathForFilename(filename.c_str());
     this->prepareTilesWithFileExtensionZ(path , extension, tilesZ);
 	
 	return true;
@@ -148,7 +171,7 @@ bool CCBigImage::initWithTilesFileTilesExtensionTilesZ(string filename, string e
 void CCBigImage::prepareTilesWithFileExtensionZ(string plistFile, string extension, int tilesZ)
 {
 	// load plist with image & tiles info
-    CCDictionary<std::string, CCObject*> *dict = CCFileUtils::dictionaryWithContentsOfFileThreadSafe(plistFile.c_str());
+    CCDictionary *dict = CCDictionary::createWithContentsOfFile(plistFile.c_str());
     if ( !dict )
     {
         CCLOGERROR("CCBigImage#prepareTilesWithFile:extension:z: can not load dictionary from file: %s", plistFile.c_str());
@@ -156,33 +179,34 @@ void CCBigImage::prepareTilesWithFileExtensionZ(string plistFile, string extensi
     }
 	
 	// load image size
-    CCDictionary<std::string, CCObject*> *sourceDict = (CCDictionary<std::string, CCObject*>*)dict->objectForKey(std::string("Source"));
-	this->setContentSize(CCSizeFromString(valueForKey("Size", sourceDict)));
+    CCDictionary *sourceDict = (CCDictionary*)dict->objectForKey(std::string("Source"));
+    CCSize size = CCSizeFromString(valueForKey("Size", sourceDict));
+    
+    this->setContentSize(size);
 	
 	// load tiles
-    CCMutableArray<CCObject*>* array = (CCMutableArray<CCObject*>*)dict->objectForKey(std::string("Tiles"));
+    CCArray* array = (CCArray*)dict->objectForKey(std::string("Tiles"));
 	
-	_dynamicChildren = CCArray::arrayWithCapacity(array->count());
+	_dynamicChildren = CCArray::createWithCapacity(array->count());
     _dynamicChildren->retain();
     
 	// set screenLoadRectExtension = size of first tile
 	if (array->count())
 	{
-        CCDictionary<std::string, CCObject*> *dict_ = (CCDictionary<std::string, CCObject*>*)array->getObjectAtIndex(0);
+        CCDictionary *dict_ = (CCDictionary*)array->objectAtIndex(0);
         _screenLoadRectExtension = CCRectFromString(valueForKey("Rect", dict_)).size;
 	}
 	
 	//read data and create nodes and add them
     for (int i=0; i<array->count(); i++)
     {
-        CCDictionary<std::string, CCObject*>* tileDict = (CCDictionary<std::string, CCObject*>*)array->getObjectAtIndex(i);
+        CCDictionary* tileDict = (CCDictionary*)array->objectAtIndex(i);
 
         // All properties of Dictionary
         const char *spriteName = valueForKey("Name", tileDict);
 		
 		CCRect tileRect = CCRectFromString(valueForKey("Rect", tileDict));
-
-		
+        
 		// convert rect origin from top-left to bottom-left
 		tileRect.origin.y = this->getContentSize().height - tileRect.origin.y - tileRect.size.height;
 		
@@ -195,7 +219,7 @@ void CCBigImage::prepareTilesWithFileExtensionZ(string plistFile, string extensi
             string name = filename.substr(0, index);
 			spriteName = (name+"."+extension).c_str();
 		}
-        
+
 		// Create & Add Tile (Dynamic Sprite Mode)
 		UnloadableSpriteNode* tile = UnloadableSpriteNode::nodeWithImageForRect(spriteName, tileRect);
 		this->addChild(tile, tilesZ);
@@ -209,13 +233,17 @@ void CCBigImage::prepareTilesWithFileExtensionZ(string plistFile, string extensi
 
 CCBigImage::~CCBigImage()
 {
-    CCDirector::sharedDirector()->setDepthTest(true);
-
-	_dynamicChildren->release();
-	_dynamicChildren = NULL;
-		
+    //this->stopTilesLoadingThread();
+    while (drawing) {
+        // 描画中のためウェイト
+        usleep(30*1000);
+    }
+    
     CCSpriteFrameCache::sharedSpriteFrameCache()->removeUnusedSpriteFrames();
     _textureCache->removeUnusedTextures();
+    
+    _dynamicChildren->release();
+	_dynamicChildren = NULL;
 }
 
 
@@ -237,10 +265,13 @@ void CCBigImage::onExit()
 
 void CCBigImage::visit()
 {
+    if (_tilesLoadThreadCancel) return;
 	this->updateLoadRect();
 	
+    drawing = true;
 	CCNode::visit();
-	
+	drawing = false;
+    
 	// remove unused textures periodically
     static int i = CCBIGIMAGE_TEXTURE_UNLOAD_PERIOD;
     if (--i <= 0) {
@@ -271,20 +302,22 @@ void CCBigImage::draw()
 void CCBigImage::startTilesLoadingThread()
 {
 	// do nothing if thread exist
-	if (this->_tilesLoadThread) {
+	if (this->_tilesLoadThread || _allStop) {
 		return;
 	}
     
 	// create new thread if it doesn't exist
     _tilesLoadThreadCancel = false;
     pthread_create(&_tilesLoadThread, NULL, &CCBigImage::updateTilesInThread, this);
-
+    pthread_detach(_tilesLoadThread);
+    
 	_tilesLoadThreadIsSleeping = false;
 }
 
 void CCBigImage::stopTilesLoadingThread()
 {
     _tilesLoadThreadCancel = true;
+    _allStop = true;
 	_tilesLoadThread = NULL;
 }
 
@@ -293,21 +326,14 @@ void CCBigImage::updateLoadRect()
 	// get screen rect
 	CCRect screenRect = CCRectZero;
 	screenRect.size = CCDirector::sharedDirector()->getWinSize();
-	
-	screenRect.size.width *= CC_CONTENT_SCALE_FACTOR();
-	screenRect.size.height *= CC_CONTENT_SCALE_FACTOR();
 
 	screenRect = CCRectApplyAffineTransform(screenRect, this->worldToNodeTransform());
-
-	screenRect.origin = ccpMult(screenRect.origin, 1/CC_CONTENT_SCALE_FACTOR() );
-	screenRect.size.width /= CC_CONTENT_SCALE_FACTOR();
-	screenRect.size.height /= CC_CONTENT_SCALE_FACTOR();
     
 	// get level's must-be-loaded-part rect
 	_loadedRect = CCRectMake(screenRect.origin.x - _screenLoadRectExtension.width,
 							 screenRect.origin.y - _screenLoadRectExtension.height,
-							 screenRect.size.width + 2.0f * _screenLoadRectExtension.width,
-							 screenRect.size.height + 2.0f * _screenLoadRectExtension.height);
+							 screenRect.size.width + 3.0f * _screenLoadRectExtension.width,
+							 screenRect.size.height + 3.0f * _screenLoadRectExtension.height);
 	
 	// avoid tiles blinking
 	if (_significantPositionChange)
@@ -334,10 +360,14 @@ void *CCBigImage::updateTilesInThread(void *ptr)
 		// flag for removeUnusedTextures only when sleeping - to disable deadLocks
 		bigImage->_tilesLoadThreadIsSleeping = false;
 		
-		for (int i=0; i<bigImage->_dynamicChildren->count(); i++)
+        if (bigImage->_tilesLoadThreadCancel) return NULL;
+        if (bigImage->_dynamicChildren==NULL) return NULL;
+        int count = bigImage->_dynamicChildren->count();
+		for (int i=0; i<count; i++)
         {
+            if (bigImage->_tilesLoadThreadCancel || bigImage->_dynamicChildren==NULL) break;
             UnloadableSpriteNode *child = (UnloadableSpriteNode*)(bigImage->_dynamicChildren->objectAtIndex(i));
-			if (!CCRect::CCRectIntersectsRect(child->boundingBox(), bigImage->_loadedRect)) {
+			if (!child->boundingBox().intersectsRect(bigImage->_loadedRect)) {
 				child->unload();
             } else {
 				child->load(bigImage->_textureCache);;
@@ -360,7 +390,7 @@ void CCBigImage::updateTiles()
     for (int i=0; i<_dynamicChildren->count(); i++)
     {
         UnloadableSpriteNode *child = (UnloadableSpriteNode*)_dynamicChildren->objectAtIndex(i);
-		if (!CCRect::CCRectIntersectsRect( _loadedRect, child->boundingBox())) {
+		if (!_loadedRect.intersectsRect(child->boundingBox())) {
 			child->unload();
 		} else {
 			child->load(_textureCache);

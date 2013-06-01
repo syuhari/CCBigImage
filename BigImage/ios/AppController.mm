@@ -2,8 +2,8 @@
 //  BigImageAppController.mm
 //  BigImage
 //
-//  Created by 松浦 晃洋 on 12/10/06.
-//  Copyright __MyCompanyName__ 2012年. All rights reserved.
+//  Created by 松浦 晃洋 on 6/1/13.
+//  Copyright __MyCompanyName__ 2013. All rights reserved.
 //
 #import <UIKit/UIKit.h>
 #import "AppController.h"
@@ -14,6 +14,9 @@
 #import "RootViewController.h"
 
 @implementation AppController
+
+@synthesize window;
+@synthesize viewController;
 
 #pragma mark -
 #pragma mark Application lifecycle
@@ -29,26 +32,36 @@ static AppDelegate s_sharedApplication;
     window = [[UIWindow alloc] initWithFrame: [[UIScreen mainScreen] bounds]];
     EAGLView *__glView = [EAGLView viewWithFrame: [window bounds]
                                      pixelFormat: kEAGLColorFormatRGBA8
-                                     depthFormat: GL_DEPTH_COMPONENT16_OES
+                                     depthFormat: GL_DEPTH_COMPONENT16
                               preserveBackbuffer: NO
                                       sharegroup: nil
                                    multiSampling: NO
-                                 numberOfSamples: 0 ];
-
+                                 numberOfSamples:0 ];
+    
     [__glView setMultipleTouchEnabled:YES];
-
+    
     // Use RootViewController manage EAGLView
     viewController = [[RootViewController alloc] initWithNibName:nil bundle:nil];
     viewController.wantsFullScreenLayout = YES;
     viewController.view = __glView;
 
     // Set RootViewController to window
-    [window addSubview: viewController.view];
+    if ( [[UIDevice currentDevice].systemVersion floatValue] < 6.0)
+    {
+        // warning: addSubView doesn't work on iOS6
+        [window addSubview: viewController.view];
+    }
+    else
+    {
+        // use this method on ios6
+        [window setRootViewController:viewController];
+    }
+    
     [window makeKeyAndVisible];
 
     [[UIApplication sharedApplication] setStatusBarHidden: YES];
 
-    cocos2d::CCApplication::sharedApplication().run();
+    cocos2d::CCApplication::sharedApplication()->run();
     return YES;
 }
 
@@ -58,14 +71,14 @@ static AppDelegate s_sharedApplication;
      Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
      Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
      */
-	cocos2d::CCDirector::sharedDirector()->pause();
+    cocos2d::CCDirector::sharedDirector()->pause();
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     /*
      Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
      */
-	cocos2d::CCDirector::sharedDirector()->resume();
+    cocos2d::CCDirector::sharedDirector()->resume();
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
@@ -73,14 +86,14 @@ static AppDelegate s_sharedApplication;
      Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
      If your application supports background execution, called instead of applicationWillTerminate: when the user quits.
      */
-    cocos2d::CCApplication::sharedApplication().applicationDidEnterBackground();
+    cocos2d::CCApplication::sharedApplication()->applicationDidEnterBackground();
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     /*
      Called as part of  transition from the background to the inactive state: here you can undo many of the changes made on entering the background.
      */
-    cocos2d::CCApplication::sharedApplication().applicationWillEnterForeground();
+    cocos2d::CCApplication::sharedApplication()->applicationWillEnterForeground();
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {

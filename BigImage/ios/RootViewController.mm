@@ -2,8 +2,8 @@
 //  BigImageAppController.h
 //  BigImage
 //
-//  Created by 松浦 晃洋 on 12/10/06.
-//  Copyright __MyCompanyName__ 2012年. All rights reserved.
+//  Created by 松浦 晃洋 on 6/1/13.
+//  Copyright __MyCompanyName__ 2013. All rights reserved.
 //
 
 #import "RootViewController.h"
@@ -34,12 +34,21 @@
 }
  
 */
-// Override to allow orientations other than the default landscape orientation.
+// Override to allow orientations other than the default portrait orientation.
+// This method is deprecated on ios6
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-	return UIInterfaceOrientationIsLandscape( interfaceOrientation );
-    
-    // switch to this line if you want to set portrait view
-    // return UIInterfaceOrientationIsPortrait( interfaceOrientation );
+    return UIInterfaceOrientationIsLandscape( interfaceOrientation );
+}
+
+// For ios6, use supportedInterfaceOrientations & shouldAutorotate instead
+- (NSUInteger) supportedInterfaceOrientations{
+#ifdef __IPHONE_6_0
+    return UIInterfaceOrientationMaskLandscape;
+#endif
+}
+
+- (BOOL) shouldAutorotate {
+    return YES;
 }
 
 - (void)didReceiveMemoryWarning {
